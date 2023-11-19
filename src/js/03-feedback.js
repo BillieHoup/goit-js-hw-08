@@ -6,35 +6,49 @@ const messageArea = document.querySelector('textarea[name="message"]');
 const btnSubmit = document.querySelector('button[type="submit"]');
 
 function restoreFormData() {
-  const emailValue = emailInput.value;
-  const messageValue = messageInput.value;
+  const savedFormData = localStorage.getItem("feedback-form-state");
 
+  if (savedFormData) {
+    const parsedData = JSON.parse(savedFormData);
+    email.value = parsedData.email || "";
+    messageArea.value = parsedData.message || "";
+  }
+}
+
+window.addEventListener('load', restoreFormData);
+
+const throttledInputHandler = throttle(function () {
   const formData = {
-    email: emailValue,
-    message: messageValue,
+    email: email.value,
+    message: messageArea.value
   };
+  console.log(formData)
+  localStorage.setItem("feedback-form-state", JSON.stringify(formData));
+}, 500);
 
-  localStorage.setItem('feedback-form-state', JSON.stringify(formData));
-}
-
-emailInput.addEventListener('input', throttle(restoreFormData, 500));
-messageInput.addEventListener('input', restoreFormData);
-
-const savedFormData = localStorage.getItem('feedback-form-state');
-if (savedFormData) {
-  const parsedData = JSON.parse(savedFormData);
-  emailInput.value = parsedData.email;
-  messageInput.value = parsedData.message;
-}
+form.addEventListener('input', throttledInputHandler);
 
 form.addEventListener('submit', function (event) {
   event.preventDefault();
+
+  const emailValue = email.value.trim();
+  const messageValue = messageArea.value.trim();
+
+  // Перевірка на заповненість обох полів
+  if (emailValue === '' || messageValue === '') {
+    console.error('Email and Message are required fields');
+    return; // Зупиняємо виконання функції, якщо одне з полів порожнє
+  }
+
+  localStorage.removeItem("feedback-form-state");
+
   const formData = {
-    email: emailInput.value,
-    message: messageInput.value,
+    email: emailValue,
+    message: messageValue
   };
+  console.log('Form submitted with values:');
   console.log(formData);
-  emailInput.value = '';
-  messageInput.value = '';
-  localStorage.removeItem('feedback-form-state');
+
+  email.value = "";
+  messageArea.value = "";
 });
